@@ -323,7 +323,7 @@ export const createUser = async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ message: "ทำไร นะโมพุทธายะ มะพะ ทะนะ ภะ กะ สะ จะ สัพเพทวาปีสาเจวะ อาฬะวะกาทะโยปิยะ ขัคคัง ตาละปัตตัง ทิสวา สัพเพยักขา ปะลายันติ สักกัสสะ วะชิราวุธัง เวสสุวัณณัสสะ คะธาวุธัง อะฬะวะกัสสะ ทุสาวุธัง ยะมะนัสสะ นะยะนาวุธัง อิเมทิสวา สัพเพยักขา ปะลายันติ " });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     // Create new user
