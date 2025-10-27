@@ -52,10 +52,13 @@ export const getOrdersByPin = async (req, res) => {
       .populate('menuItemId', 'name price image')
       .sort({ createdAt: -1 });
 
-    // Calculate summary
+    // กรองเฉพาะออเดอร์ที่ไม่ถูกยกเลิกสำหรับคำนวณยอดรวม
+    const activeOrders = orders.filter((o) => o.status !== 'cancel');
+
+    // Calculate summary (ไม่รวมออเดอร์ที่ยกเลิก)
     const summary = {
-      totalItems: orders.reduce((sum, order) => sum + order.amount, 0),
-      totalPrice: orders.reduce((sum, order) => sum + order.totalPrice, 0),
+      totalItems: activeOrders.reduce((sum, order) => sum + order.amount, 0),
+      totalPrice: activeOrders.reduce((sum, order) => sum + order.totalPrice, 0),
       orderCount: orders.length,
       statusCount: {
         pending: orders.filter((o) => o.status === 'pending').length,
