@@ -1,0 +1,8 @@
+# ไม่ต้อง copy node_modules และไฟล์อื่นๆ ที่ไม่จำเป็น
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+uploads/*
+!uploads/.gitkeep

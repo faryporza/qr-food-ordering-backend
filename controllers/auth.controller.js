@@ -54,7 +54,12 @@ export const login = async (req, res) => {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
+
+    // Validate required fields
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: "Username, email, and password are required" });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -65,12 +70,13 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Create new user
+    // 🔒 SECURITY: Public registration can only create "employee" role
+    // Admin and Dev users must be created by authorized users via createUser endpoint
     const user = new User({
       username,
       email,
       password,
-      role: role || "employee",
+      role: "employee", // Fixed role for public registration
     });
 
     await user.save();
@@ -116,12 +122,12 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// Get all users (admin only)
+// Get all users (admin or dev only)
 export const getAllUsers = async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin only." });
+    // Check if user is admin or dev
+    if (req.user.role !== "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Access denied. Admin or Dev only." });
     }
 
     const users = await User.find().select("-password");
@@ -144,12 +150,12 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Get user by ID (admin only)
+// Get user by ID (admin or dev only)
 export const getUserById = async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin only." });
+    // Check if user is admin or dev
+    if (req.user.role !== "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Access denied. Admin or Dev only." });
     }
 
     const { id } = req.params;
@@ -176,12 +182,12 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Update user (admin only)
+// Update user (admin or dev only, with role restrictions)
 export const updateUser = async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin only." });
+    // Check if user is admin or dev
+    if (req.user.role !== "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Access denied. Admin or Dev only." });
     }
 
     const { id } = req.params;
@@ -191,6 +197,17 @@ export const updateUser = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // 🔒 SECURITY: Role-based restrictions
+    // Only dev can update to dev role
+    if (role === "dev" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Only dev can assign dev role" });
+    }
+
+    // Only dev can update other dev users
+    if (user.role === "dev" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Only dev can update dev users" });
     }
 
     // Check if username/email is already taken by another user
@@ -233,26 +250,33 @@ export const updateUser = async (req, res) => {
   }
 };
 
-// Delete user (admin only)
+// Delete user (admin or dev only, with restrictions)
 export const deleteUser = async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin only." });
+    // Check if user is admin or dev
+    if (req.user.role !== "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Access denied. Admin or Dev only." });
     }
 
     const { id } = req.params;
 
-    // Prevent admin from deleting themselves
+    // Prevent user from deleting themselves
     if (id === req.user.id) {
       return res.status(400).json({ message: "Cannot delete your own account" });
     }
 
-    const user = await User.findByIdAndDelete(id);
+    const user = await User.findById(id);
     
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // 🔒 SECURITY: Only dev can delete dev users
+    if (user.role === "dev" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Only dev can delete dev users" });
+    }
+
+    await User.findByIdAndDelete(id);
 
     res.json({
       message: "User deleted successfully",
@@ -268,12 +292,12 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Create user (admin only)
+// Create user (admin or dev only, with role restrictions)
 export const createUser = async (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied. Admin only." });
+    // Check if user is admin or dev
+    if (req.user.role !== "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Access denied. Admin or Dev only." });
     }
 
     const { username, email, password, role } = req.body;
@@ -281,6 +305,16 @@ export const createUser = async (req, res) => {
     // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ message: "Username, email, and password are required" });
+    }
+
+    // 🔒 SECURITY: Only dev can create dev users
+    if (role === "dev" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Only dev can create dev users" });
+    }
+
+    // 🔒 SECURITY: Only dev can create admin users
+    if (role === "admin" && req.user.role !== "dev") {
+      return res.status(403).json({ message: "Only dev can create admin users" });
     }
 
     // Check if user already exists
