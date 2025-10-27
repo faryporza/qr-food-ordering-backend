@@ -7,8 +7,9 @@ const router = express.Router();
 // POST /api/auth/login
 router.post("/login", login);
 
-// POST /api/auth/register
-router.post("/register", register);
+// POST /api/auth/register - 🔒 DISABLED: Use /api/auth/users instead (admin/dev only)
+// Public registration is disabled for security. Only admin/dev can create users.
+// router.post("/register", register);
 
 // GET /api/auth/user (get current user profile)
 router.get("/user", authenticateToken, getProfile);
