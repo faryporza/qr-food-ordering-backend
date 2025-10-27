@@ -9,7 +9,7 @@ import {
   deleteMenuItem,
   uploadImage,
 } from '../controllers/menuItem.controller.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -30,8 +30,8 @@ const upload = multer({
   },
 });
 
-// Public routes
-router.get('/', getAllMenuItems);
+// Public routes (with optional auth to support both customer and admin/employee)
+router.get('/', optionalAuth, getAllMenuItems);
 router.get('/:id', getMenuItemById);
 
 // Protected routes (require authentication)
