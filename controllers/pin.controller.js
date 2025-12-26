@@ -15,12 +15,8 @@ const generatePin = () => {
 export const getAllPins = async (req, res) => {
   try {
     const { status_pin } = req.query;
-    const query = {};
-
-    // Filter by status_pin if provided
-    if (status_pin) {
-      query.status_pin = status_pin;
-    }
+    // Default to 'active' if no status_pin is provided
+    const query = { status_pin: status_pin || 'active' };
 
     const pins = await Pin.find(query)
       .populate('tableId', 'tableNumber')
